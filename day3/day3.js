@@ -22,7 +22,8 @@ class Wire {
 		const intersections = this.path.reduce((accumulator, myPath) => {
 			return [...accumulator, wire.path.reduce((accumulator, wPath) => {
 				if (wPath.intersects(myPath)) {
-					return [...accumulator, wPath];
+					const intersection = new Intersection(wPath, myPath);
+					return [...accumulator, intersection];
 				}
 				return accumulator;
 			}, [])];
@@ -113,10 +114,44 @@ class WirePath {
 	}
 }
 
+class Intersection {
+	constructor(a, b) {
+		this.a = a;
+		this.b = b;
+	}
+
+	coordinate() {
+		if (this.a.horizontal()) {
+			return new Coordinate(this.b.origin.x, this.a.origin.y);
+		} else {
+			return new Coordinate(this.a.origin.x, this.b.origin.y);
+		}
+	}
+}
+
+class ManhattanDistance {
+	constructor(coordinate) {
+		this.coordinate = coordinate;
+	}
+
+	value() {
+		return Math.abs(this.coordinate.x) + Math.abs(this.coordinate.y);
+	}
+}
+
 fs.readFile('./input', (error, input) => {
 	const lines = input.toString().split('\n');
 	const wires = lines.slice(0, 2).map(line => {
 		return Wire.fromLine(line);
 	});
-	console.log(wires[0].intersections(wires[1]));
+	const intersections = wires[0].intersections(wires[1]).flat(Infinity);
+	let minDistance = Infinity;
+	intersections.forEach(int => {
+		const distance = new ManhattanDistance(int.coordinate());
+		if (minDistance > distance.value()) {
+			minDistance = distance.value();
+		}
+	});
+
+	console.log(minDistance);
 });
